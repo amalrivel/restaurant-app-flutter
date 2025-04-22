@@ -1,7 +1,5 @@
 import 'dart:convert';
-import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:restaurant_app/data/models/customer_review.dart';
 import 'package:restaurant_app/data/models/restaurant.dart';
 import 'package:http/http.dart' as http;
@@ -12,49 +10,18 @@ class RestaurantApiService {
   static const String _baseUrl = 'https://restaurant-api.dicoding.dev/';
 
   Future<RestaurantResponse> getRestaurants() async {
-    if (kDebugMode) {
-      print("Fetching restaurants from API...");
-    }
+    final response = await http.get(Uri.parse('${_baseUrl}list'));
 
-    try {
-      final response = await http.get(Uri.parse('${_baseUrl}list'));
+    if (response.statusCode == 200) {
+      final RestaurantResponse restaurantResponse = RestaurantResponse.fromJson(
+        jsonDecode(response.body),
+      );
 
-      if (kDebugMode) {
-        print("Response status code: ${response.statusCode}");
-        print(
-          "Response body preview: ${response.body.substring(0, min(100, response.body.length))}...",
-        );
-      }
-
-      if (response.statusCode == 200) {
-        try {
-          final RestaurantResponse restaurantResponse =
-              RestaurantResponse.fromJson(jsonDecode(response.body));
-
-          if (kDebugMode) {
-            print(
-              "Successfully parsed JSON, found ${restaurantResponse.restaurants.length} restaurants",
-            );
-          }
-
-          return restaurantResponse;
-        } catch (e) {
-          if (kDebugMode) {
-            print("JSON parsing error: $e");
-            print("Raw response: ${response.body}");
-          }
-          throw FormatException('Failed to parse API response: $e');
-        }
-      } else {
-        throw Exception(
-          'Failed to load restaurants list: ${response.statusCode}',
-        );
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print("Network or parsing error: $e");
-      }
-      rethrow;
+      return restaurantResponse;
+    } else {
+      throw Exception(
+        'Failed to load restaurants list: ${response.statusCode}',
+      );
     }
   }
 

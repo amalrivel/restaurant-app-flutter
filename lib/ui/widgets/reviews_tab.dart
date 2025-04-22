@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:restaurant_app/data/models/customer_review.dart';
 import 'package:restaurant_app/providers/restaurant_detail_provider.dart';
+import 'package:restaurant_app/providers/review_form_provider.dart';
 
 class ReviewsTab extends StatelessWidget {
   final List<CustomerReview> reviews;
@@ -221,7 +222,6 @@ class _ReviewFormState extends State<_ReviewForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _reviewController = TextEditingController();
-  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -232,125 +232,134 @@ class _ReviewFormState extends State<_ReviewForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Write Your Review',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          TextFormField(
-            controller: _nameController,
-            decoration: InputDecoration(
-              labelText: 'Your Name',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              prefixIcon: const Icon(Icons.person),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your name';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _reviewController,
-            decoration: InputDecoration(
-              labelText: 'Your Review',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              prefixIcon: const Icon(Icons.rate_review),
-              alignLabelWithHint: true,
-            ),
-            maxLines: 4,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your review';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed:
-                _isSubmitting
-                    ? null
-                    : () async {
-                      if (_formKey.currentState!.validate()) {
-                        setState(() {
-                          _isSubmitting = true;
-                        });
+    return ChangeNotifierProvider(
+      create: (_) => ReviewFormProvider(),
+      child: Builder(
+        builder: (context) {
+          final formProvider = context.watch<ReviewFormProvider>();
 
-                        try {
-                          final provider =
-                              context.read<RestaurantDetailProvider>();
+          return Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Write Your Review',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Your Name',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    prefixIcon: const Icon(Icons.person),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your name';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _reviewController,
+                  decoration: InputDecoration(
+                    labelText: 'Your Review',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    prefixIcon: const Icon(Icons.rate_review),
+                    alignLabelWithHint: true,
+                  ),
+                  maxLines: 4,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your review';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed:
+                      formProvider.isSubmitting
+                          ? null
+                          : () async {
+                            if (_formKey.currentState!.validate()) {
+                              formProvider.setSubmitting(true);
 
-                          await provider.addReview(
-                            widget.restaurantId,
-                            _nameController.text,
-                            _reviewController.text,
-                          );
+                              try {
+                                final detailProvider =
+                                    context.read<RestaurantDetailProvider>();
 
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Review added successfully!'),
-                                backgroundColor: Colors.green,
+                                await detailProvider.addReview(
+                                  widget.restaurantId,
+                                  _nameController.text,
+                                  _reviewController.text,
+                                );
+
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Review added successfully!',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                  Navigator.pop(context);
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error: ${e.toString()}'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } finally {
+                                if (context.mounted) {
+                                  formProvider.setSubmitting(false);
+                                }
+                              }
+                            }
+                          },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child:
+                      formProvider.isSubmitting
+                          ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
-                            );
-                            Navigator.pop(context);
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error: ${e.toString()}'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        } finally {
-                          if (mounted) {
-                            setState(() {
-                              _isSubmitting = false;
-                            });
-                          }
-                        }
-                      }
-                    },
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+                              SizedBox(width: 10),
+                              Text('Submitting...'),
+                            ],
+                          )
+                          : const Text('Submit Review'),
+                ),
+              ],
             ),
-            child:
-                _isSubmitting
-                    ? const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        SizedBox(width: 10),
-                        Text('Submitting...'),
-                      ],
-                    )
-                    : const Text('Submit Review'),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

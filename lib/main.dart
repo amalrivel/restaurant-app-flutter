@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:restaurant_app/config/theme/app_theme.dart';
 import 'package:restaurant_app/data/api/restaurant_api_service.dart';
+import 'package:restaurant_app/providers/navigation_provider.dart';
 import 'package:restaurant_app/providers/restaurant_list_provider.dart';
 import 'package:restaurant_app/providers/restaurant_search_provider.dart';
 import 'package:restaurant_app/providers/theme_provider.dart';
@@ -19,6 +20,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider(create: (context) => RestaurantApiService()),
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(
           create:

@@ -43,7 +43,7 @@ class RestaurantDetailProvider extends ChangeNotifier {
         notifyListeners();
       }
     } on Exception catch (e) {
-      _state = RestaurantDetailErrorState(e.toString());
+      _state = RestaurantDetailErrorState("Failed to load data");
       notifyListeners();
     }
   }

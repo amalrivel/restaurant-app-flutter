@@ -42,7 +42,7 @@ class RestaurantSearchProvider with ChangeNotifier {
         _state = RestaurantSearchLoadedState(result.restaurants);
       }
     } on Exception catch (e) {
-      _state = RestaurantSearchErrorState(e.toString());
+      _state = RestaurantSearchErrorState("Failed to load data");
     } finally {
       notifyListeners();
     }
