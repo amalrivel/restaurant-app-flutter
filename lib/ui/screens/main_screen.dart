@@ -7,10 +7,7 @@ import 'package:restaurant_app/ui/screens/settings_screen.dart';
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
 
-  static const List<Widget> _screens = [
-    HomeScreen(),
-    SettingsScreen(),
-  ];
+  static const List<Widget> _screens = [HomeScreen(), SettingsScreen()];
 
   @override
   Widget build(BuildContext context) {
